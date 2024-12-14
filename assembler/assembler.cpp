@@ -15,11 +15,6 @@ static void append_cmd(FILE *src, struct code *code, char opcode);
 static FILE *create_bin(void);
 static void write_bin(FILE *bin, struct code *code);
 
-static int cmd_hlt_cont(FILE *src, struct code *code, char opcode);
-static int cmd_push_cont(FILE *src, struct code *code, char opcode);
-static int cmd_out_cont(FILE *src, struct code *code, char opcode);
-static int cmd_jmp_cont(FILE *src, struct code *code, char opcode);
-
 static void append_cmd_no_arg(struct code *code, char opcode);
 static void append_cmd_push(FILE *src, struct code *code, char opcode);
 static void append_cmd_jmp(FILE *src, struct code *code, char opcode);
@@ -28,11 +23,6 @@ static struct cmd_desc cmds[] = {CMD_HLT,  "hlt",
                 CMD_PUSH, "push", CMD_OUT,  "out", CMD_JMP, "jmp"};
 
 static const size_t ncmds = sizeof(cmds)/sizeof(cmds[0]);
-
-static int (*cmd_funcs[])(FILE *src, struct code *code, char opcode) =
-{cmd_hlt_cont, cmd_push_cont, cmd_out_cont, cmd_jmp_cont};
-
-static const size_t n_cmd_funcs = sizeof(cmd_funcs)/sizeof(cmd_funcs[0]);
 
 void run_assembler(const char *filename)
 {
@@ -84,45 +74,21 @@ static int parse_cmd(const char *cmd)
 
 static void append_cmd(FILE *src, struct code *code, char opcode)
 {
-        for (int i = 0; i < n_cmd_funcs; ++i)
-                if (cmd_funcs[i](src, code, opcode) < 0)
-                        continue;
-}
-
-static int cmd_hlt_cont(FILE *src, struct code *code, char opcode)
-{
-        if (opcode != CMD_HLT)
-                return -1;
-
-        append_cmd_no_arg(code, opcode);
-        return 0;
-}
-
-static int cmd_push_cont(FILE *src, struct code *code, char opcode)
-{
-        if (opcode != CMD_PUSH)
-                return -1;
-        
-        append_cmd_push(src, code, opcode);
-        return 0;
-}
-
-static int cmd_out_cont(FILE *src, struct code *code, char opcode)
-{
-        if (opcode != CMD_OUT)
-                return -1;
-
-        append_cmd_no_arg(code, opcode);
-        return 0;
-}
-
-static int cmd_jmp_cont(FILE *src, struct code *code, char opcode)
-{
-        if (opcode != CMD_JMP)
-                return -1;
-
-        append_cmd_jmp(src, code, opcode);
-        return 0;
+        switch (opcode) {
+                case CMD_HLT:
+                case CMD_OUT:
+                        append_cmd_no_arg(code, opcode);
+                        break;
+                case CMD_PUSH:
+                        append_cmd_push(src, code, opcode);
+                        break;
+                case CMD_JMP:
+                        append_cmd_jmp(src, code, opcode);
+                        break;
+                default:
+                        fprintf(stderr, "error: invalid command");
+                        exit(1);
+        }
 }
 
 static void append_cmd_no_arg(struct code *code, char opcode)
