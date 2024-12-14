@@ -11,13 +11,13 @@
 static FILE *open_src(const char *filename, struct code *code);
 static void translate_src(FILE *src, struct code *code);
 static int parse_cmd(const char *cmd);
-static void append_cmd(FILE *src, struct code *code, char opcode);
+static void insert_cmd(FILE *src, struct code *code, char opcode);
 static FILE *create_bin(void);
 static void write_bin(FILE *bin, struct code *code);
 
-static void append_cmd_no_arg(struct code *code, char opcode);
-static void append_cmd_push(FILE *src, struct code *code, char opcode);
-static void append_cmd_jmp(FILE *src, struct code *code, char opcode);
+static void insert_cmd_no_arg(struct code *code, char opcode);
+static void insert_cmd_push(FILE *src, struct code *code, char opcode);
+static void insert_cmd_jmp(FILE *src, struct code *code, char opcode);
 
 static struct cmd_desc cmds[] = {CMD_HLT,  "hlt",
                 CMD_PUSH, "push", CMD_OUT,  "out", CMD_JMP, "jmp"};
@@ -59,7 +59,7 @@ static void translate_src(FILE *src, struct code *code)
                         fprintf(stderr, "error: invalid command \"%s\"\n", cmd);
                         exit(1);
                 }
-                append_cmd(src, code, opcode);
+                insert_cmd(src, code, opcode);
         }
 }
 
@@ -72,18 +72,18 @@ static int parse_cmd(const char *cmd)
         return -1;
 }
 
-static void append_cmd(FILE *src, struct code *code, char opcode)
+static void insert_cmd(FILE *src, struct code *code, char opcode)
 {
         switch (opcode) {
                 case CMD_HLT:
                 case CMD_OUT:
-                        append_cmd_no_arg(code, opcode);
+                        insert_cmd_no_arg(code, opcode);
                         break;
                 case CMD_PUSH:
-                        append_cmd_push(src, code, opcode);
+                        insert_cmd_push(src, code, opcode);
                         break;
                 case CMD_JMP:
-                        append_cmd_jmp(src, code, opcode);
+                        insert_cmd_jmp(src, code, opcode);
                         break;
                 default:
                         fprintf(stderr, "error: invalid command");
@@ -91,7 +91,7 @@ static void append_cmd(FILE *src, struct code *code, char opcode)
         }
 }
 
-static void append_cmd_no_arg(struct code *code, char opcode)
+static void insert_cmd_no_arg(struct code *code, char opcode)
 {
         if (!code) {
                 fprintf(stderr, "error: null pointer\n");
@@ -102,7 +102,7 @@ static void append_cmd_no_arg(struct code *code, char opcode)
         code->ptr += sizeof(char);
 }
 
-static void append_cmd_push(FILE *src, struct code *code, char opcode)
+static void insert_cmd_push(FILE *src, struct code *code, char opcode)
 {
         if (!code) {
                 fprintf(stderr, "error: null pointer\n");
@@ -118,7 +118,7 @@ static void append_cmd_push(FILE *src, struct code *code, char opcode)
         code->ptr += sizeof(double);
 }
 
-static void append_cmd_jmp(FILE *src, struct code *code, char opcode)
+static void insert_cmd_jmp(FILE *src, struct code *code, char opcode)
 {
         if (!code) {
                 fprintf(stderr, "error: null pointer\n");
