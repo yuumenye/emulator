@@ -158,7 +158,12 @@ static void write_bin(FILE *bin, struct code *code)
                 fprintf(stderr, "error: null pointer\n");
                 exit(1);
         }
-        
+
+        char signature[] = "kya";
+        int signature_len = strlen(signature);
+
+        fwrite(signature, sizeof(char), signature_len, bin);
+
         int code_size = code->ptr - code->code;
         fwrite(code, code_size, 1, bin); 
 }

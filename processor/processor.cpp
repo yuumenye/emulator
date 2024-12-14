@@ -11,6 +11,7 @@
 
 static FILE *open_bin(const char *filename);
 static void read_bin(FILE *bin, struct processor *processor);
+static void verify_signature(FILE *bin);
 static void execute_program(struct processor *processor);
 static int execute_cmd(struct processor *processor, int opcode);
 
@@ -47,7 +48,21 @@ static void read_bin(FILE *bin, struct processor *processor)
                 exit(1);
         }
 
+        verify_signature(bin);
         fread(processor->code, sizeof(char), codelen, bin);
+}
+
+static void verify_signature(FILE *bin)
+{
+        char signature[] = "kya";
+        int signature_len = strlen(signature);
+        char tmp[signature_len] = "";
+
+        fread(tmp, sizeof(char), signature_len, bin);
+        if (strcmp(tmp, signature) != 0) {
+                fprintf(stderr, "error: unknown file format\n");
+                exit(1);
+        }
 }
 
 static void execute_program(struct processor *processor)
