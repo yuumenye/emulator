@@ -25,7 +25,8 @@ static void insert_cmd_jmp(FILE *src, struct code *code,
 static struct cmd_desc cmds[] = {CMD_HLT, "hlt", CMD_PUSH, "push",
         CMD_ADD, "add", CMD_SUB, "sub", CMD_MUL, "mul", CMD_DIV, "div",
         CMD_OUT, "out", CMD_IN, "in", CMD_SQRT, "sqrt", CMD_SIN, "sin",
-        CMD_COS, "cos", CMD_JMP, "jmp"};
+        CMD_COS, "cos", CMD_JMP, "jmp", CMD_JA, "ja", CMD_JAE, "jae",
+        CMD_JB, "jb", CMD_JBE, "jbe", CMD_JE, "je", CMD_JNE, "jne"};
 
 static const size_t ncmds = sizeof(cmds)/sizeof(cmds[0]);
 
@@ -105,6 +106,12 @@ static void insert_cmd(FILE *src, struct code *code, struct labels *labels,
                         insert_cmd_push(src, code, opcode);
                         break;
                 case CMD_JMP:
+                case CMD_JA:
+                case CMD_JAE:
+                case CMD_JB:
+                case CMD_JBE:
+                case CMD_JE:
+                case CMD_JNE:
                         insert_cmd_jmp(src, code, labels, opcode);
                         break;
                 default:

@@ -26,7 +26,14 @@ static void execute_cmd_in(struct processor *processor);
 static void execute_cmd_sqrt(struct processor *processor);
 static void execute_cmd_sin(struct processor *processor);
 static void execute_cmd_cos(struct processor *processor);
+
 static void execute_cmd_jmp(struct processor *processor);
+static void execute_cmd_ja(struct processor *processor);
+static void execute_cmd_jae(struct processor *processor);
+static void execute_cmd_jb(struct processor *processor);
+static void execute_cmd_jbe(struct processor *processor);
+static void execute_cmd_je(struct processor *processor);
+static void execute_cmd_jne(struct processor *processor);
 
 #ifdef DEBUG
 static void processor_dump(struct processor *processor);
@@ -36,7 +43,7 @@ static void processor_dump(struct processor *processor);
                            ++processor->ip;                 \
                            stack_pop(&processor->stk, &a);  \
                            stack_pop(&processor->stk, &b);  \
-                           c = a OP b;                      \
+                           c = b OP a;                      \
                            stack_push(&processor->stk, &c);
 
 #define UNARY_ARITHMETIC(OP) double a = 0, b = 0;            \
@@ -44,6 +51,16 @@ static void processor_dump(struct processor *processor);
                              stack_pop(&processor->stk, &a); \
                              b = OP(a);                      \
                              stack_push(&processor->stk, &b);
+
+#define CONDITIONAL_JMP(OP) int arg = 0;                                  \
+                            double a = 0, b = 0;                          \
+                            ++processor->ip;                              \
+                            memcpy(&arg, processor->code + processor->ip, \
+                                            sizeof(int));                 \
+                            stack_pop(&processor->stk, &a);               \
+                            stack_pop(&processor->stk, &b);               \
+                            if (b OP a)                                   \
+                                    processor->ip = arg;
 
 void run_processor(const char *filename)
 {
@@ -149,6 +166,24 @@ static int execute_cmd(struct processor *processor, int opcode)
                 case CMD_JMP:
                         execute_cmd_jmp(processor);
                         break;
+                case CMD_JA:
+                        execute_cmd_ja(processor);
+                        break;
+                case CMD_JAE:
+                        execute_cmd_jae(processor);
+                        break;
+                case CMD_JB:
+                        execute_cmd_jb(processor);
+                        break;
+                case CMD_JBE:
+                        execute_cmd_jbe(processor);
+                        break;
+                case CMD_JE:
+                        execute_cmd_je(processor);
+                        break;
+                case CMD_JNE:
+                        execute_cmd_jne(processor);
+                        break;
                 default:
                         fprintf(stderr, "error: invalid instruction\n");
                         exit(1);
@@ -172,20 +207,6 @@ static void execute_cmd_push(struct processor *processor)
         processor->ip += sizeof(double);
 }
 
-static void execute_cmd_jmp(struct processor *processor)
-{
-        if (!processor || !processor->code) {
-                fprintf(stderr, "error: null pointer\n");
-                exit(1);
-        }
-
-        ++processor->ip;
-
-        int arg = 0;
-        memcpy(&arg, processor->code + processor->ip, sizeof(int));
-        processor->ip = arg;
-}
-
 static void execute_cmd_out(struct processor *processor)
 {
         if (!processor) {
@@ -202,6 +223,7 @@ static void execute_cmd_add(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         BIN_ARITHMETIC(+);
@@ -211,6 +233,7 @@ static void execute_cmd_sub(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         BIN_ARITHMETIC(-);
@@ -220,6 +243,7 @@ static void execute_cmd_mul(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         BIN_ARITHMETIC(*);
@@ -229,6 +253,7 @@ static void execute_cmd_div(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         BIN_ARITHMETIC(/);
@@ -238,6 +263,7 @@ static void execute_cmd_in(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         double arg = 0;
@@ -249,6 +275,7 @@ static void execute_cmd_sqrt(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         UNARY_ARITHMETIC(sqrt);
@@ -258,6 +285,7 @@ static void execute_cmd_sin(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         UNARY_ARITHMETIC(sin);
@@ -267,9 +295,84 @@ static void execute_cmd_cos(struct processor *processor)
 {
         if (!processor) {
                 fprintf(stderr, "error: null pointer\n");
+                exit(1);
         }
 
         UNARY_ARITHMETIC(cos);
+}
+
+static void execute_cmd_jmp(struct processor *processor)
+{
+        if (!processor || !processor->code) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        ++processor->ip;
+
+        int arg = 0;
+        memcpy(&arg, processor->code + processor->ip, sizeof(int));
+        processor->ip = arg;
+}
+
+static void execute_cmd_ja(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(>);
+}
+
+static void execute_cmd_jae(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(>=);
+}
+
+static void execute_cmd_jb(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(<);
+}
+
+static void execute_cmd_jbe(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(<=);
+}
+
+static void execute_cmd_je(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(==);
+}
+
+static void execute_cmd_jne(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        CONDITIONAL_JMP(!=);
 }
 
 #ifdef DEBUG

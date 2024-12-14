@@ -88,11 +88,18 @@ static void move_pos(int opcode, int *ip)
                 case CMD_COS:
                         *ip += sizeof(char);
                         break;
-                case CMD_JMP:
-                        *ip += sizeof(char) + sizeof(int);
-                        break;
                 case CMD_PUSH:
                         *ip += sizeof(char) + sizeof(double);
+                        break;
+                case CMD_JMP:
+                case CMD_JA:
+                case CMD_JAE:
+                case CMD_JB:
+                case CMD_JBE:
+                case CMD_JE:
+                case CMD_JNE:
+                        *ip += sizeof(char) + sizeof(int);
+                        break;
         }
 }
 

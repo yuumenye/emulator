@@ -15,7 +15,13 @@ enum cmd {
         CMD_SQRT,
         CMD_SIN,
         CMD_COS,
-        CMD_JMP
+        CMD_JMP,
+        CMD_JA,
+        CMD_JAE,
+        CMD_JB,
+        CMD_JBE,
+        CMD_JE,
+        CMD_JNE
 };
 
 struct cmd_desc {
