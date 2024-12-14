@@ -7,6 +7,7 @@ enum cmd {
         CMD_HLT,
         CMD_PUSH,
         CMD_OUT,
+        CMD_JMP
 };
 
 struct cmd_desc {

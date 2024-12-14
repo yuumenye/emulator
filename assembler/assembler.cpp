@@ -18,17 +18,19 @@ static void write_bin(FILE *bin, struct code *code);
 static int cmd_hlt_cont(FILE *src, struct code *code, char opcode);
 static int cmd_push_cont(FILE *src, struct code *code, char opcode);
 static int cmd_out_cont(FILE *src, struct code *code, char opcode);
+static int cmd_jmp_cont(FILE *src, struct code *code, char opcode);
 
 static void append_cmd_no_arg(struct code *code, char opcode);
 static void append_cmd_push(FILE *src, struct code *code, char opcode);
+static void append_cmd_jmp(FILE *src, struct code *code, char opcode);
 
 static struct cmd_desc cmds[] = {CMD_HLT,  "hlt",
-                CMD_PUSH, "push", CMD_OUT,  "out"};
+                CMD_PUSH, "push", CMD_OUT,  "out", CMD_JMP, "jmp"};
 
 static const size_t ncmds = sizeof(cmds)/sizeof(cmds[0]);
 
 static int (*cmd_funcs[])(FILE *src, struct code *code, char opcode) =
-{cmd_hlt_cont, cmd_push_cont, cmd_out_cont};
+{cmd_hlt_cont, cmd_push_cont, cmd_out_cont, cmd_jmp_cont};
 
 static const size_t n_cmd_funcs = sizeof(cmd_funcs)/sizeof(cmd_funcs[0]);
 
@@ -64,7 +66,7 @@ static void translate_src(FILE *src, struct code *code)
         while (fscanf(src, "%s", cmd) == 1) {
                 char opcode = 0;
                 if ((opcode = parse_cmd(cmd)) < 0) {
-                        fprintf(stderr, "error: invalid command\n");
+                        fprintf(stderr, "error: invalid command \"%s\"\n", cmd);
                         exit(1);
                 }
                 append_cmd(src, code, opcode);
@@ -114,6 +116,15 @@ static int cmd_out_cont(FILE *src, struct code *code, char opcode)
         return 0;
 }
 
+static int cmd_jmp_cont(FILE *src, struct code *code, char opcode)
+{
+        if (opcode != CMD_JMP)
+                return -1;
+
+        append_cmd_jmp(src, code, opcode);
+        return 0;
+}
+
 static void append_cmd_no_arg(struct code *code, char opcode)
 {
         if (!code) {
@@ -139,6 +150,22 @@ static void append_cmd_push(FILE *src, struct code *code, char opcode)
         fscanf(src, "%lg", &arg);
         memcpy(code->ptr, &arg, sizeof(double));
         code->ptr += sizeof(double);
+}
+
+static void append_cmd_jmp(FILE *src, struct code *code, char opcode)
+{
+        if (!code) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        memcpy(code->ptr, &opcode, sizeof(char));
+        code->ptr += sizeof(char);
+
+        int arg = 0;
+        fscanf(src, "%d", &arg);
+        memcpy(code->ptr, &arg, sizeof(int));
+        code->ptr += sizeof(int);
 }
 
 static FILE *create_bin(void)

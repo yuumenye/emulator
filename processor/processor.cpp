@@ -17,6 +17,7 @@ static int execute_cmd(struct processor *processor, int opcode);
 
 static void execute_cmd_push(struct processor *processor);
 static void execute_cmd_out(struct processor *processor);
+static void execute_cmd_jmp(struct processor *processor);
 
 #ifdef DEBUG
 static void processor_dump(struct processor *processor);
@@ -99,6 +100,9 @@ static int execute_cmd(struct processor *processor, int opcode)
                 case CMD_OUT:
                         execute_cmd_out(processor);
                         break;
+                case CMD_JMP:
+                        execute_cmd_jmp(processor);
+                        break;
                 default:
                         fprintf(stderr, "error: invalid instruction\n");
                         exit(1);
@@ -122,6 +126,20 @@ static void execute_cmd_push(struct processor *processor)
         processor->ip += sizeof(double);
 }
 
+static void execute_cmd_jmp(struct processor *processor)
+{
+        if (!processor || !processor->code) {
+                fprintf(stderr, "error: null pointer\n");
+                exit(1);
+        }
+
+        ++processor->ip;
+
+        int arg = 0;
+        memcpy(&arg, processor->code + processor->ip, sizeof(int));
+        processor->ip = arg;
+}
+
 static void execute_cmd_out(struct processor *processor)
 {
         if (!processor) {
@@ -138,20 +156,18 @@ static void execute_cmd_out(struct processor *processor)
 static void processor_dump(struct processor *processor)
 {
         int mod = 16;
-        int ip = processor->ip / mod;
 
         for (int i = 0; i < mod; ++i)
                 printf("%02X ", i);
         printf("\n\n");
 
-        for (int i = 0; i < 16; ++i) {
-                printf("%02X ", (unsigned char) processor->code[ip]);
-                ++ip;
-        }
+        for (int i = 0; i < mod; ++i)
+                printf("%02X ", (unsigned char) processor->code[i +
+                                (processor->ip / mod) * mod]);
         printf("\n");
 
-        ip = processor->ip % 16;
-        for (int i = 0; i < 3*ip; ++i)
+        int remainder = processor->ip % mod;
+        for (int i = 0; i < 3*remainder; ++i)
                 printf(" ");
         printf("^ip = %d\n\n", processor->ip);
 }
