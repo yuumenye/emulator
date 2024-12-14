@@ -1,9 +1,9 @@
 CC := g++
-FLAGS := -I ../common
+FLAGS := -I ../common -D DEBUG
 
 all: assembler
 
-assembler: main.o assembler.o
+assembler: main.o assembler.o labels.o
 	$(CC) $^ -o $@ 
 
 main.o: main.cpp
@@ -11,6 +11,9 @@ main.o: main.cpp
 
 assembler.o: assembler.cpp
 	$(CC) $(FLAGS) -c assembler.cpp
+
+labels.o: labels.cpp
+	$(CC) $(FLAGS) -c labels.cpp
 
 clean:
 	rm -rf *.o assembler

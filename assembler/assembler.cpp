@@ -7,17 +7,20 @@
 #include <string.h>
 #include "common.h"
 #include "assembler.h"
+#include "labels.h"
 
 static FILE *open_src(const char *filename, struct code *code);
 static void translate_src(FILE *src, struct code *code);
-static int parse_cmd(const char *cmd);
-static void insert_cmd(FILE *src, struct code *code, char opcode);
+int parse_cmd(const char *cmd);
+static void insert_cmd(FILE *src, struct code *code,
+                struct labels *labels, char opcode);
 static FILE *create_bin(void);
 static void write_bin(FILE *bin, struct code *code);
 
 static void insert_cmd_no_arg(struct code *code, char opcode);
 static void insert_cmd_push(FILE *src, struct code *code, char opcode);
-static void insert_cmd_jmp(FILE *src, struct code *code, char opcode);
+static void insert_cmd_jmp(FILE *src, struct code *code,
+                struct labels *labels, char opcode);
 
 static struct cmd_desc cmds[] = {CMD_HLT,  "hlt",
                 CMD_PUSH, "push", CMD_OUT,  "out", CMD_JMP, "jmp"};
@@ -53,17 +56,25 @@ static void translate_src(FILE *src, struct code *code)
         const int cmdlen = 10;
         char cmd[cmdlen] = {};
 
+        struct labels labels = {};
+        labels_ctor(&labels, 10);
+        labels_find(src, &labels);
+        labels_dump(&labels);
+
         while (fscanf(src, "%s", cmd) == 1) {
                 char opcode = 0;
-                if ((opcode = parse_cmd(cmd)) < 0) {
-                        fprintf(stderr, "error: invalid command \"%s\"\n", cmd);
-                        exit(1);
+                if ((opcode = parse_cmd(cmd)) >= 0) {
+                        insert_cmd(src, code, &labels, opcode);
+                        continue;
                 }
-                insert_cmd(src, code, opcode);
+                if (islabel(cmd))
+                        continue;
+                fprintf(stderr, "error: invalid command \"%s\"\n", cmd);
+                exit(1);
         }
 }
 
-static int parse_cmd(const char *cmd)
+int parse_cmd(const char *cmd)
 {
         for (int i = 0; i < ncmds; ++i) {
                 if (strcmp(cmd, cmds[i].name) == 0)
@@ -72,7 +83,8 @@ static int parse_cmd(const char *cmd)
         return -1;
 }
 
-static void insert_cmd(FILE *src, struct code *code, char opcode)
+static void insert_cmd(FILE *src, struct code *code, struct labels *labels,
+                char opcode)
 {
         switch (opcode) {
                 case CMD_HLT:
@@ -83,10 +95,10 @@ static void insert_cmd(FILE *src, struct code *code, char opcode)
                         insert_cmd_push(src, code, opcode);
                         break;
                 case CMD_JMP:
-                        insert_cmd_jmp(src, code, opcode);
+                        insert_cmd_jmp(src, code, labels, opcode);
                         break;
                 default:
-                        fprintf(stderr, "error: invalid command");
+                        fprintf(stderr, "error: invalid command\n");
                         exit(1);
         }
 }
@@ -118,7 +130,7 @@ static void insert_cmd_push(FILE *src, struct code *code, char opcode)
         code->ptr += sizeof(double);
 }
 
-static void insert_cmd_jmp(FILE *src, struct code *code, char opcode)
+static void insert_cmd_jmp(FILE *src, struct code *code, struct labels *labels, char opcode)
 {
         if (!code) {
                 fprintf(stderr, "error: null pointer\n");
@@ -128,9 +140,14 @@ static void insert_cmd_jmp(FILE *src, struct code *code, char opcode)
         memcpy(code->ptr, &opcode, sizeof(char));
         code->ptr += sizeof(char);
 
-        int arg = 0;
-        fscanf(src, "%d", &arg);
-        memcpy(code->ptr, &arg, sizeof(int));
+        char arg[label_len] = "";
+        fscanf(src, "%s", arg);
+
+        if (label_replace(code->ptr, labels, arg) < 0) {
+                int pos = atoi(arg);
+                memcpy(code->ptr, &arg, sizeof(int));
+        }
+
         code->ptr += sizeof(int);
 }
 

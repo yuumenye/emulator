@@ -9,5 +9,6 @@ struct code {
 };
 
 void run_assembler(const char *filename);
+int parse_cmd(const char *cmd);
 
 #endif
