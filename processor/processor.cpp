@@ -18,6 +18,10 @@ static int execute_cmd(struct processor *processor, int opcode);
 static void execute_cmd_push(struct processor *processor);
 static void execute_cmd_out(struct processor *processor);
 
+#ifdef DEBUG
+static void processor_dump(struct processor *processor);
+#endif
+
 void run_processor(const char *filename)
 {
         struct processor processor = {};
@@ -81,6 +85,10 @@ static void execute_program(struct processor *processor)
 
 static int execute_cmd(struct processor *processor, int opcode)
 {
+        #ifdef DEBUG
+        processor_dump(processor);
+        #endif
+
         switch (opcode) {
                 case CMD_HLT:
                         return 0;
@@ -104,7 +112,7 @@ static void execute_cmd_push(struct processor *processor)
                 fprintf(stderr, "error: null pointer\n");
                 exit(1);
         }
-        
+
         ++processor->ip;
 
         double arg = 0;
@@ -124,6 +132,27 @@ static void execute_cmd_out(struct processor *processor)
         ++processor->ip;
 
         stack_peek(&processor->stk);
-
-        ++processor->ip;
 }
+
+#ifdef DEBUG
+static void processor_dump(struct processor *processor)
+{
+        int mod = 16;
+        int ip = processor->ip / mod;
+
+        for (int i = 0; i < mod; ++i)
+                printf("%02X ", i);
+        printf("\n\n");
+
+        for (int i = 0; i < 16; ++i) {
+                printf("%02X ", (unsigned char) processor->code[ip]);
+                ++ip;
+        }
+        printf("\n");
+
+        ip = processor->ip % 16;
+        for (int i = 0; i < 3*ip; ++i)
+                printf(" ");
+        printf("^ip = %d\n\n", processor->ip);
+}
+#endif

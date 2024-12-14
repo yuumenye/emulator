@@ -1,5 +1,5 @@
 CC := g++
-FLAGS := -I ../common
+FLAGS := -I ../common -D DEBUG
 
 all: processor
 
