@@ -98,12 +98,11 @@ static void read_bin(FILE *bin, struct processor *processor)
 
 static void verify_signature(FILE *bin)
 {
-        char signature[] = "kya";
-        int signature_len = strlen(signature);
-        char tmp[signature_len] = "";
+        uint32_t signature = 0x61796b;
+        char tmp[sizeof(struct header)] = "";
 
-        fread(tmp, sizeof(char), signature_len, bin);
-        if (strcmp(tmp, signature) != 0) {
+        fread(tmp, sizeof(struct header), 1, bin);
+        if (memcmp(tmp, &signature, sizeof(uint32_t)) != 0) {
                 fprintf(stderr, "error: unknown file format\n");
                 exit(1);
         }

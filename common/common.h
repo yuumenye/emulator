@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdint.h>
+
 const int codelen = 1000; /* max code length in bytes */
 
 enum cmd {
@@ -27,6 +29,13 @@ enum cmd {
 struct cmd_desc {
         enum cmd val;
         const char *name;
+};
+
+struct header {
+        uint32_t signature;
+        uint32_t v;
+        uint32_t size;
+        uint32_t reserved;
 };
 
 #endif

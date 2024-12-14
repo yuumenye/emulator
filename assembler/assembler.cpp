@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include "common.h"
 #include "assembler.h"
@@ -186,11 +187,11 @@ static void write_bin(FILE *bin, struct code *code)
                 exit(1);
         }
 
-        char signature[] = "kya";
-        int signature_len = strlen(signature);
+        uint32_t code_size = code->ptr - code->code;
 
-        fwrite(signature, sizeof(char), signature_len, bin);
+        struct header header = {0x61796b, 1, code_size, 0};
 
-        int code_size = code->ptr - code->code;
+        fwrite(&header, 1, sizeof(struct header), bin);
+
         fwrite(code, code_size, 1, bin); 
 }
