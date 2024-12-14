@@ -74,7 +74,7 @@ void stack_pop(struct stack *stk, void *elm)
 /* print out last elm, works only for double */
 void stack_peek(struct stack *stk)
 {
-        if (stk->size < 0)
+        if (stk->size <= 0)
                 return;
 
         printf("%lg\n", *((double *) stk->data + (stk->size - 1)));
