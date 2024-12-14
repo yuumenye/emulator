@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "common.h"
 #include "processor.h"
 #include "stack.h"
@@ -16,12 +17,33 @@ static void execute_program(struct processor *processor);
 static int execute_cmd(struct processor *processor, int opcode);
 
 static void execute_cmd_push(struct processor *processor);
+static void execute_cmd_add(struct processor *processor);
+static void execute_cmd_sub(struct processor *processor);
+static void execute_cmd_mul(struct processor *processor);
+static void execute_cmd_div(struct processor *processor);
 static void execute_cmd_out(struct processor *processor);
+static void execute_cmd_in(struct processor *processor);
+static void execute_cmd_sqrt(struct processor *processor);
+static void execute_cmd_sin(struct processor *processor);
+static void execute_cmd_cos(struct processor *processor);
 static void execute_cmd_jmp(struct processor *processor);
 
 #ifdef DEBUG
 static void processor_dump(struct processor *processor);
 #endif
+
+#define BIN_ARITHMETIC(OP) double a = 0, b = 0, c = 0;      \
+                           ++processor->ip;                 \
+                           stack_pop(&processor->stk, &a);  \
+                           stack_pop(&processor->stk, &b);  \
+                           c = a OP b;                      \
+                           stack_push(&processor->stk, &c);
+
+#define UNARY_ARITHMETIC(OP) double a = 0, b = 0;            \
+                             ++processor->ip;                \
+                             stack_pop(&processor->stk, &a); \
+                             b = OP(a);                      \
+                             stack_push(&processor->stk, &b);
 
 void run_processor(const char *filename)
 {
@@ -97,8 +119,32 @@ static int execute_cmd(struct processor *processor, int opcode)
                 case CMD_PUSH:
                         execute_cmd_push(processor);
                         break;
+                case CMD_ADD:
+                        execute_cmd_add(processor);
+                        break;
+                case CMD_SUB:
+                        execute_cmd_sub(processor);
+                        break;
+                case CMD_MUL:
+                        execute_cmd_mul(processor);
+                        break;
+                case CMD_DIV:
+                        execute_cmd_div(processor);
+                        break;
                 case CMD_OUT:
                         execute_cmd_out(processor);
+                        break;
+                case CMD_IN:
+                        execute_cmd_in(processor);
+                        break;
+                case CMD_SQRT:
+                        execute_cmd_sqrt(processor);
+                        break;
+                case CMD_SIN:
+                        execute_cmd_sin(processor);
+                        break;
+                case CMD_COS:
+                        execute_cmd_cos(processor);
                         break;
                 case CMD_JMP:
                         execute_cmd_jmp(processor);
@@ -152,11 +198,86 @@ static void execute_cmd_out(struct processor *processor)
         stack_peek(&processor->stk);
 }
 
+static void execute_cmd_add(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        BIN_ARITHMETIC(+);
+}
+
+static void execute_cmd_sub(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        BIN_ARITHMETIC(-);
+}
+
+static void execute_cmd_mul(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        BIN_ARITHMETIC(*);
+}
+
+static void execute_cmd_div(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        BIN_ARITHMETIC(/);
+}
+
+static void execute_cmd_in(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        double arg = 0;
+        scanf("%lg", &arg);
+        stack_push(&processor->stk, &arg);
+}
+
+static void execute_cmd_sqrt(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        UNARY_ARITHMETIC(sqrt);
+}
+
+static void execute_cmd_sin(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        UNARY_ARITHMETIC(sin);
+}
+
+static void execute_cmd_cos(struct processor *processor)
+{
+        if (!processor) {
+                fprintf(stderr, "error: null pointer\n");
+        }
+
+        UNARY_ARITHMETIC(cos);
+}
+
 #ifdef DEBUG
 static void processor_dump(struct processor *processor)
 {
         int mod = 16;
 
+        printf("-----------------------------------------------\n");
         for (int i = 0; i < mod; ++i)
                 printf("%02X ", i);
         printf("\n\n");
@@ -170,5 +291,6 @@ static void processor_dump(struct processor *processor)
         for (int i = 0; i < 3*remainder; ++i)
                 printf(" ");
         printf("^ip = %d\n\n", processor->ip);
+        printf("-----------------------------------------------\n");
 }
 #endif

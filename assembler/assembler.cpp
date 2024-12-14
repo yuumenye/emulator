@@ -22,8 +22,10 @@ static void insert_cmd_push(FILE *src, struct code *code, char opcode);
 static void insert_cmd_jmp(FILE *src, struct code *code,
                 struct labels *labels, char opcode);
 
-static struct cmd_desc cmds[] = {CMD_HLT,  "hlt",
-                CMD_PUSH, "push", CMD_OUT,  "out", CMD_JMP, "jmp"};
+static struct cmd_desc cmds[] = {CMD_HLT, "hlt", CMD_PUSH, "push",
+        CMD_ADD, "add", CMD_SUB, "sub", CMD_MUL, "mul", CMD_DIV, "div",
+        CMD_OUT, "out", CMD_IN, "in", CMD_SQRT, "sqrt", CMD_SIN, "sin",
+        CMD_COS, "cos", CMD_JMP, "jmp"};
 
 static const size_t ncmds = sizeof(cmds)/sizeof(cmds[0]);
 
@@ -88,7 +90,15 @@ static void insert_cmd(FILE *src, struct code *code, struct labels *labels,
 {
         switch (opcode) {
                 case CMD_HLT:
+                case CMD_ADD:
+                case CMD_SUB:
+                case CMD_MUL:
+                case CMD_DIV:
                 case CMD_OUT:
+                case CMD_IN:
+                case CMD_SQRT:
+                case CMD_SIN:
+                case CMD_COS:
                         insert_cmd_no_arg(code, opcode);
                         break;
                 case CMD_PUSH:

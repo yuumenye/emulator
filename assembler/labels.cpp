@@ -77,7 +77,15 @@ static void move_pos(int opcode, int *ip)
 {
         switch (opcode) {
                 case CMD_HLT:
+                case CMD_ADD:
+                case CMD_SUB:
+                case CMD_MUL:
+                case CMD_DIV:
                 case CMD_OUT:
+                case CMD_IN:
+                case CMD_SQRT:
+                case CMD_SIN:
+                case CMD_COS:
                         *ip += sizeof(char);
                         break;
                 case CMD_JMP:
