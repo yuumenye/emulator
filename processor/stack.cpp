@@ -77,7 +77,7 @@ void stack_peek(struct stack *stk)
         if (stk->size < 0)
                 return;
 
-        printf("%lg\n", *(double *) stk->data + (stk->size - 1));
+        printf("%lg\n", *((double *) stk->data + (stk->size - 1)));
 }
 
 static void stack_init_to_zero(struct stack *stk)
